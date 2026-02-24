@@ -229,14 +229,23 @@
                 <div class="feature-card">
                     <div class="feature-icon"><i class="fas fa-cloud"></i></div>
                     <h3>Permanent Media</h3>
-                    <p>Integrated Cloudinary storage makes your image hosting bulletproof, fast, and optimized for any
-                        device.</p>
+                    <p>Integrated Cloudinary storage makes your image hosting bulletproof, fast, and optimized.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon"><i class="fas fa-code"></i></div>
                     <h3>Pure JSON API</h3>
-                    <p>Get your content exactly how you want it. Our clean REST API delivers JSON that's ready for any
-                        frontend.</p>
+                    <p>Our clean REST API delivers JSON that's ready for any modern frontend build.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                    <h3>Automation Webhooks</h3>
+                    <p>Trigger instant rebuilds on Vercel or Netlify. We notify your frontend when you publish.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-search-plus"></i></div>
+                    <h3>SEO & Social Built-in</h3>
+                    <p>Custom Meta Titles, Descriptions, and OpenGraph images ensure your blog looks perfect everywhere.
+                    </p>
                 </div>
             </section>
 
@@ -250,24 +259,19 @@
                     <pre>
 <span class="code-comment">// 1. Setup your secure request</span>
 <span class="code-keyword">const</span> API_KEY = <span class="code-string">'pb_your_private_key'</span>;
-<span class="code-keyword">const</span> URL = <span class="code-string">'https://pulsiveblog.vercel.app/api/v1/posts'</span>;
+<span class="code-keyword">const</span> SLUG = <span class="code-string">'my-awesome-post'</span>;
 
 <span class="code-comment">// 2. Fetch with optimized headers</span>
-<span class="code-keyword">const</span> response = <span class="code-keyword">await</span> fetch(URL, {
-    method: <span class="code-string">'GET'</span>,
-    headers: {
-        <span class="code-string">'X-API-KEY'</span>: API_KEY,
-        <span class="code-string">'Content-Type'</span>: <span class="code-string">'application/json'</span>
-    }
+<span class="code-keyword">const</span> res = <span class="code-keyword">await</span> fetch(<span class="code-string">`https://pulsiveblog.vercel.app/api/v1/posts/${SLUG}`</span>, {
+    headers: { <span class="code-string">'X-API-KEY'</span>: API_KEY }
 });
 
-<span class="code-comment">// 3. Handle data with confidence</span>
-<span class="code-keyword">if</span> (response.ok) {
-    <span class="code-keyword">const</span> { posts } = <span class="code-keyword">await</span> response.json();
-    console.log(<span class="code-string">`Found ${posts.length} stories`</span>);
-} <span class="code-keyword">else</span> {
-    console.error(<span class="code-string">'Access Denied or Server Error'</span>);
-}</pre>
+<span class="code-comment">// 3. Render with SEO & Social Meta</span>
+<span class="code-keyword">const</span> post = <span class="code-keyword">await</span> res.json();
+<span class="code-keyword">const</span> { title, content, metaTitle, metaDescription } = post;
+
+document.title = metaTitle || title;
+console.log(<span class="code-string">'Social Description:'</span>, metaDescription);</pre>
                 </div>
             </section>
         </main>

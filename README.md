@@ -1,103 +1,77 @@
-# pulsiveblog: The Headless CMS for Developers
+# pulsiveblog: Professional Headless CMS Platform
 
-pulsiveblog is a modern, lightweight, and secure headless content management system specifically engineered for developer workflows. It focuses on zero-friction content management by leveraging tools that developers already use and love, such as GitHub and Cloudinary.
+pulsiveblog is a high-performance, developer-centric headless content management system. It provides a robust REST API for delivering content to any frontend, combined with a secure management dashboard.
 
-## Core Philosophy
+## System Architecture
 
-- Developer Centric: No complex interfaces. Single-click sign-in with GitHub and immediate access to a clean management dashboard.
-- Headless First: Your content is delivered via a high-performance JSON API, ready to be consumed by any frontend framework (Next.js, Vite, etc.) or static site generator.
-- Robust Media: Integrated Cloudinary support ensures your images are permanently hosted, globally distributed, and automatically optimized.
-- Secure by Design: Protected by GitHub OAuth and secured with personal API keys for all programmatic data access.
+The platform is built on a modern stack ensuring scalability and security:
+- Backend: Node.js with Express 4
+- Database: MongoDB (Atlas) with Mongoose
+- Storage: Cloudinary for optimized media delivery
+- Auth: GitHub OAuth 2.0 with JWT session management
+- Security: Per-user API Key isolation
 
-## Features
+## Core Features
 
-- Native GitHub Authentication: No additional passwords. Secure session management via GitHub identities.
-- API Key Security: Every user account is secured with a unique API key (pb_*) required for all content fetching and management.
-- RESTful API v1: Clean, predictable versioned endpoints following industry standards.
-- Integrated Media Manager: Direct-to-Cloudinary image uploads with automatic responsive resizing.
-- Rich Text Management: Elegant editing experience via Quill integration with real-time HTML/JSON generation.
-- Responsive Dashboard: A premium manager interface that works seamlessly on desktop and mobile.
+### Multi-User Isolation
+Every user account operates in a private workspace. Posts, media, and settings are strictly scoped to the authenticated user.
 
-## Getting Started
+### Automation Webhooks
+The platform supports outbound webhooks. You can configure a target URL (e.g., Vercel or Netlify deploy hooks) that receives a POST request whenever content is created, updated, or deleted.
 
-### Local Development
+### Developer API
+A clean RESTful API allows for seamless content integration:
+- Authentication via X-API-KEY header
+- Support for filtering by tags
+- Automated slug generation
+- JSON response format
 
-1. Clone the repository and install dependencies:
-   ```bash
-   npm install
-   ```
+### SEO and Social Management
+Dedicated fields for meta titles, meta descriptions, and OpenGraph images allow for fine-tuned search engine and social media optimization.
 
-2. Create a .env file in the root directory and provide:
-   - MONGODB_URI (Your MongoDB Atlas connection string)
-   - CLIENT_ID (GitHub OAuth App Client ID)
-   - CLIENT_SECRET (GitHub OAuth App Client Secret)
-   - JWT_SECRET (A random secure string for token signing)
-   - CLOUDINARY_CLOUD_NAME
-   - CLOUDINARY_API_KEY
-   - CLOUDINARY_API_SECRET
-   - CALLBACK_URL (Default: http://localhost:8080/api/v1/auth/github/callback)
-
-3. Start the development server:
-   ```bash
-   npm start
-   ```
-
-### Vercel Deployment
-
-pulsiveblog is pre-configured for Vercel deployment.
-
-1. Connect your repository to Vercel.
-2. Add all environment variables listed above to the Vercel Dashboard.
-3. Update your GitHub OAuth callback URL to your Vercel deployment URL (e.g., https://your-project.vercel.app/api/v1/auth/github/callback).
-4. Deploy.
-
-## API v1 Reference
-
-All endpoints are prefixed with /api/v1.
+## API Documentation
 
 ### Authentication
+Include your API key in the request header:
+`X-API-KEY: your_private_key`
 
-Public content fetching requires your personal API key. Management actions require either a valid JWT session or the API key passed in the headers.
+### v1 Endpoints
 
-Header: `X-API-KEY: your_api_key`
-Query Param: `?api_key=your_api_key`
-
-### 1. Fetch All Posts
+#### Get All Posts
 `GET /api/v1/posts`
-
 Query Parameters:
-- tag: Filter by specific tag.
-- page: Pagination page (default: 1).
-- limit: Results per page (default: 10).
-- status: published or draft (default: published).
+- `tag`: Filter by specific tag
+- `status`: Default is 'published'
+- `page`: Pagination page
+- `limit`: Items per page
 
-### 2. Fetch Single Post
+#### Get Single Post
 `GET /api/v1/posts/:identifier`
+The identifier can be the MongoDB ObjectID or the URL slug.
 
-- identifier can be the post _id or the unique slug.
+## Deployment
 
-### 3. Management Endpoints
-- POST /api/v1/posts: Create a new post.
-- PUT /api/v1/posts/:id: Update an existing post.
-- DELETE /api/v1/posts/:id: Delete a post.
+### Environment Variables
+The following variables are required for deployment:
+- `MONGODB_URI`: Your MongoDB connection string
+- `GITHUB_CLIENT_ID`: GitHub OAuth Client ID
+- `GITHUB_CLIENT_SECRET`: GitHub OAuth Client Secret
+- `JWT_SECRET`: Secure string for token signing
+- `CLOUDINARY_URL`: Cloudinary connection string
+- `CALLBACK_URL`: Your production callback URL (e.g., https://your-app.vercel.app/api/v1/auth/github/callback)
 
-## Frontend Integration Example
+### Vercel Configuration
+The project includes a `vercel.json` for zero-configuration deployment. Ensure that the 'trust proxy' setting is enabled in the server initialization for proper session handling in serverless environments.
 
-```javascript
-async function getPulsiveContent() {
-    const apiKey = 'your_pulsive_api_key';
-    const res = await fetch('https://your-app.vercel.app/api/v1/posts', {
-        headers: { 'X-API-KEY': apiKey }
-    });
-    const data = await res.json();
-    return data.posts;
-}
-```
+## Development
 
-## Security Notice
+1. Install dependencies:
+   `npm install`
 
-Always keep your API keys and GitHub Client Secrets confidential. When deploying to production, ensure MONGODB_URI is restricted to specific Vercel IPs or whitelisted in MongoDB Atlas.
+2. Start the development server:
+   `npm start`
 
-## License
+3. Access the dashboard:
+   Navigate to `localhost:8080/dashboard.html`
 
-This project is licensed under the ISC License.
+The system automatically manages database connection health and provides graceful error handling for serverless cold starts.

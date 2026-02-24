@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const auth = require('../middleware/auth');
@@ -59,8 +60,38 @@ router.get('/github/callback',
 
 router.get('/me', auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
+        const user = await User.findById(req.user._id);
         res.json(user);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Update User Settings (Webhook URL, etc.)
+router.put('/settings', auth, async (req, res) => {
+    try {
+        const { webhookUrl } = req.body;
+        const user = await User.findByIdAndUpdate(
+            req.user._id,
+            { webhookUrl },
+            { new: true }
+        );
+        res.json({ message: 'Settings updated', user });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Regenerate API Key
+router.post('/regenerate-api-key', auth, async (req, res) => {
+    try {
+        const newApiKey = 'pb_' + crypto.randomBytes(32).toString('hex');
+        const user = await User.findByIdAndUpdate(
+            req.user._id,
+            { apiKey: newApiKey },
+            { new: true }
+        );
+        res.json({ message: 'API Key regenerated successfully', apiKey: newApiKey });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

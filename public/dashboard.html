@@ -45,9 +45,9 @@
                         <div class="menu-header">
                             <span class="menu-label">My Account</span>
                         </div>
-                        <a href="#" class="menu-item">
-                            <i class="fas fa-user-circle"></i> Profile Setting
-                        </a>
+                        <button id="open-settings-modal" class="menu-item">
+                            <i class="fas fa-cog"></i> Settings
+                        </button>
                         <hr class="menu-divider">
                         <button id="logout-btn" class="menu-item logout-item" onclick="Auth.logout()">
                             <i class="fas fa-sign-out-alt"></i> Logout
@@ -118,8 +118,29 @@
                             </div>
                             <input type="hidden" id="featured-image">
                         </div>
+                    </div>
+
+                    <!-- SEO Section -->
+                    <div
+                        style="margin-top: 1.5rem; padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                        <h4
+                            style="margin-bottom: 1rem; color: var(--primary); font-size: 0.9rem; letter-spacing: 0.05rem;">
+                            SEO & SOCIAL SETTINGS</h4>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label for="meta-title">SEO Title</label>
+                            <input type="text" id="meta-title" placeholder="Custom Google title (optional)">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label for="meta-description">SEO Description</label>
+                            <textarea id="meta-description" placeholder="Short summary for search engines"
+                                style="width: 100%; height: 80px; padding: 1rem; background: var(--bg-dark); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; resize: vertical;"></textarea>
+                        </div>
                         <div class="form-group">
-                            <label for="status">Status</label>
+                            <label for="og-image">OpenGraph Image URL</label>
+                            <input type="text" id="og-image" placeholder="Social share image URL (optional)">
+                        </div>
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label for="status">Post Status</label>
                             <select id="status"
                                 style="width: 100%; padding: 1rem; background: var(--bg-dark); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white;">
                                 <option value="published">Published</option>
@@ -146,6 +167,47 @@
                         style="width: 100%; justify-content: center; background: #24292e; border: none; padding: 1rem;">
                         <i class="fab fa-github"></i> Sign in with GitHub
                     </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <span class="close-modal">&times;</span>
+                <h2>Developer Settings</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">Configure your automation
+                    and
+                    integrations.</p>
+
+                <div class="form-group">
+                    <label>Your API Key</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="setting-api-key" readonly
+                            style="background: #0f172a; color: var(--primary); font-family: monospace;">
+                        <button class="btn btn-secondary" id="copy-api-key-btn" title="Copy API Key">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="btn btn-danger" id="regenerate-api-key-btn" title="Regenerate API Key"
+                            style="padding: 0.5rem 1rem;">
+                            <i class="fas fa-sync-alt"></i> Regenerate
+                        </button>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Use this key in your
+                        X-API-KEY header. Warning: Regenerating will invalidate your old key.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="webhook-url">Deployment Webhook (POST)</label>
+                    <input type="url" id="webhook-url" placeholder="https://api.vercel.com/v1/integrations/deploy/...">
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Triggered on every
+                        Create,
+                        Update, or Delete event.</p>
+                </div>
+
+                <div class="form-actions" style="margin-top: 2rem;">
+                    <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="save-settings-btn">Save Settings</button>
                 </div>
             </div>
         </div>

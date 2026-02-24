@@ -62,8 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     // Close dropdown when clicking outside
-                    document.addEventListener('click', () => {
-                        menu.classList.remove('active');
+                    document.addEventListener('click', (e) => {
+                        if (!menu.contains(e.target) && !profileBadge.contains(e.target)) {
+                            menu.classList.remove('active');
+                        }
                     });
                 }
             }

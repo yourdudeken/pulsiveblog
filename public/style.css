@@ -573,9 +573,14 @@ footer {
         font-size: 2rem !important;
     }
 
+    .logo {
+        font-size: 1.2rem;
+        /* Slightly smaller to fit full name */
+    }
+
     .logo span span {
-        display: none;
-        /* Hide 'blog' part on tiny screens to save space */
+        display: inline;
+        /* Keep 'blog' visible as requested */
     }
 
     #open-create-modal span {

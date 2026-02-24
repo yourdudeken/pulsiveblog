@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
     githubId: { type: String, unique: true, sparse: true },
     avatar: { type: String },
     apiKey: { type: String, unique: true, sparse: true },
+    webhookUrl: { type: String },
     createdAt: { type: Date, default: Date.now }
 });
 

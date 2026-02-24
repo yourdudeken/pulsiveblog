@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalTitle = document.getElementById('modal-title');
     const openCreateModalBtn = document.getElementById('open-create-modal');
     const closeModalBtns = document.querySelectorAll('.close-modal, .close-modal-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const openSettingsBtn = document.getElementById('open-settings-modal');
 
     let isEditing = false;
     const API_URL = '/api/v1/posts';
@@ -88,6 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('post-id').value = '';
         document.getElementById('featured-image').value = '';
         document.getElementById('image-status').textContent = 'No image selected';
+        document.getElementById('meta-title').value = '';
+        document.getElementById('meta-description').value = '';
+        document.getElementById('og-image').value = '';
         postModal.style.display = 'flex';
     });
 
@@ -101,7 +106,118 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === postModal) {
             postModal.style.display = 'none';
         }
+        if (e.target === settingsModal) {
+            settingsModal.style.display = 'none';
+        }
     });
+
+    // Settings Handle
+    openSettingsBtn.addEventListener('click', async () => {
+        const menu = document.getElementById('profile-menu');
+        if (menu) menu.classList.remove('active');
+
+        const user = Auth.getUser();
+        if (user) {
+            document.getElementById('setting-api-key').value = user.apiKey || '';
+            document.getElementById('webhook-url').value = user.webhookUrl || '';
+            settingsModal.style.display = 'flex';
+        }
+    });
+
+    closeModalBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            settingsModal.style.display = 'none';
+        });
+    });
+
+    window.saveSettings = async () => {
+        const webhookUrl = document.getElementById('webhook-url').value;
+        const saveBtn = document.getElementById('save-settings-btn');
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        try {
+            const response = await fetch('/api/v1/auth/settings', {
+                method: 'PUT',
+                headers: Auth.getHeaders(),
+                body: JSON.stringify({ webhookUrl })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Update local storage with fresh data
+                const user = Auth.getUser();
+                localStorage.setItem('pulsive_user', JSON.stringify({
+                    ...user,
+                    webhookUrl: data.user.webhookUrl
+                }));
+                alert('Settings saved successfully!');
+                settingsModal.style.display = 'none';
+            } else {
+                alert('Failed to save settings');
+            }
+        } catch (error) {
+            console.error('Error saving settings:', error);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Settings';
+        }
+    };
+
+    document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+
+    window.copyApiKey = () => {
+        const apiKey = document.getElementById('setting-api-key').value;
+        navigator.clipboard.writeText(apiKey).then(() => {
+            const btn = document.getElementById('copy-api-key-btn');
+            const originalIcon = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => btn.innerHTML = originalIcon, 2000);
+        });
+    };
+
+    document.getElementById('copy-api-key-btn').addEventListener('click', copyApiKey);
+
+    window.regenerateApiKey = async () => {
+        if (!confirm('Are you sure? This will immediately invalidate your existing key and any integrations using it.')) {
+            return;
+        }
+
+        const regenBtn = document.getElementById('regenerate-api-key-btn');
+        regenBtn.disabled = true;
+        regenBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Regenerating...';
+
+        try {
+            const response = await fetch('/api/v1/auth/regenerate-api-key', {
+                method: 'POST',
+                headers: Auth.getHeaders()
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('setting-api-key').value = data.apiKey;
+
+                // Update local storage
+                const user = Auth.getUser();
+                localStorage.setItem('pulsive_user', JSON.stringify({
+                    ...user,
+                    apiKey: data.apiKey
+                }));
+
+                alert('API Key regenerated successfully!');
+            } else {
+                alert('Failed to regenerate API Key');
+            }
+        } catch (error) {
+            console.error('Error regenerating API key:', error);
+        } finally {
+            regenBtn.disabled = false;
+            regenBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Regenerate';
+        }
+    };
+
+    document.getElementById('regenerate-api-key-btn').addEventListener('click', regenerateApiKey);
 
     // Create/Update Post
     postForm.addEventListener('submit', async (e) => {
@@ -116,7 +232,10 @@ document.addEventListener('DOMContentLoaded', () => {
             tags: tagsInput ? tagsInput.split(',').map(tag => tag.trim()) : [],
             excerpt: document.getElementById('excerpt').value,
             content: quill.root.innerHTML,
-            status: document.getElementById('status').value
+            status: document.getElementById('status').value,
+            metaTitle: document.getElementById('meta-title').value,
+            metaDescription: document.getElementById('meta-description').value,
+            openGraphImage: document.getElementById('og-image').value
         };
 
         try {
@@ -186,6 +305,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('image-status').textContent = post.featuredImage ? 'Image uploaded' : 'No image selected';
             quill.root.innerHTML = post.content || '';
             document.getElementById('status').value = post.status || 'published';
+            document.getElementById('meta-title').value = post.metaTitle || '';
+            document.getElementById('meta-description').value = post.metaDescription || '';
+            document.getElementById('og-image').value = post.openGraphImage || '';
 
             postModal.style.display = 'flex';
         } catch (error) {
