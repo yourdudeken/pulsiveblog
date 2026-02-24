@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_pulse_blog_key';
+const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_pulsive_blog_key';
 
 const auth = (req, res, next) => {
     const authHeader = req.header('Authorization');

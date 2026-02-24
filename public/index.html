@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Blog Manager</title>
+    <title>pulsiveblog | CMS for Developers</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,8 +12,122 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Quill Rich Text Editor CSS -->
-    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <style>
+        .landing-hero {
+            padding: 8rem 0 4rem;
+            text-align: center;
+        }
+
+        .landing-hero h1 {
+            font-size: 4.5rem;
+            line-height: 1.1;
+            margin-bottom: 2rem;
+        }
+
+        .landing-hero .badge {
+            display: inline-block;
+            padding: 0.5rem 1.25rem;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .features-section {
+            padding: 6rem 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2.5rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            padding: 3rem;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: var(--transition);
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+        }
+
+        .code-preview {
+            background: #020617;
+            padding: 2.5rem;
+            border-radius: 24px;
+            margin-top: 6rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .code-preview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+
+        .code-preview pre {
+            color: #94a3b8;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        .code-keyword {
+            color: #818cf8;
+        }
+
+        .code-string {
+            color: #10b981;
+        }
+
+        .code-comment {
+            color: #475569;
+        }
+
+        @media (max-width: 900px) {
+            .features-section {
+                grid-template-columns: 1fr;
+            }
+
+            .landing-hero h1 {
+                font-size: 3rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -21,136 +135,105 @@
         <header>
             <div class="logo">
                 <i class="fas fa-feather-alt"></i>
-                <span>Pulse<span>Blog</span></span>
+                <span>pulsive<span>blog</span></span>
             </div>
-            <div class="header-actions" style="display: flex; gap: 1rem; align-items: center;">
-                <button id="open-create-modal" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> New Post
-                </button>
-                <div class="profile-dropdown-container">
-                    <div id="user-profile" class="user-profile" style="display: none;">
+            <div class="header-nav">
+                <div id="auth-buttons" style="display: flex; gap: 1rem; align-items: center;">
+                    <a href="/api/auth/github" class="btn btn-primary" id="login-cta">
+                        <i class="fab fa-github"></i> Get Started
+                    </a>
+                    <div id="user-profile-landing" class="user-profile" style="display: none;">
                         <img id="user-avatar" src="" alt="Avatar">
                         <span id="user-name"></span>
-                        <i class="fas fa-chevron-down"
-                            style="font-size: 0.7rem; color: var(--text-muted); margin-left: 0.25rem;"></i>
-                    </div>
-                    <div id="profile-menu" class="dropdown-menu">
-                        <div class="menu-header">
-                            <span class="menu-label">My Account</span>
-                        </div>
-                        <a href="#" class="menu-item">
-                            <i class="fas fa-user-circle"></i> Profile Setting
-                        </a>
-                        <hr class="menu-divider">
-                        <button id="logout-btn" class="menu-item logout-item" onclick="Auth.logout()">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </button>
                     </div>
                 </div>
             </div>
         </header>
 
         <main>
-            <section class="hero">
-                <h1>Manage your stories</h1>
-                <p>Create, edit, and curate your thoughts with our elegant interface.</p>
-            </section>
-
-            <div id="posts-container" class="posts-grid">
-                <!-- Posts will be loaded here -->
-                <div class="loader">
-                    <div class="spinner"></div>
-                    <p>Fetching your stories...</p>
-                </div>
-            </div>
-        </main>
-
-        <!-- Modal for Create/Edit -->
-        <div id="post-modal" class="modal">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <h2 id="modal-title">Create New Post</h2>
-                <form id="post-form">
-                    <input type="hidden" id="post-id">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="title">Title</label>
-                            <input type="text" id="title" placeholder="Enter a catchy title..." required>
-                        </div>
-                        <div class="form-group">
-                            <label for="author">Author</label>
-                            <input type="text" id="author" placeholder="Your name" value="Admin">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="tags">Tags (comma separated)</label>
-                        <input type="text" id="tags" placeholder="tech, lifestyle, news">
-                    </div>
-                    <div class="form-group">
-                        <label for="excerpt">Excerpt / Summary</label>
-                        <textarea id="excerpt" placeholder="Brief summary of the post..."
-                            style="min-height: 80px;"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="content">Content</label>
-                        <div id="editor-container"></div>
-                        <input type="hidden" id="content">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Featured Image</label>
-                            <div style="display: flex; gap: 1rem; align-items: center;">
-                                <input type="file" id="image-upload" accept="image/*" style="display: none;">
-                                <button type="button" class="btn btn-secondary"
-                                    onclick="document.getElementById('image-upload').click()">
-                                    <i class="fas fa-upload"></i> Choose
-                                </button>
-                                <span id="image-status"
-                                    style="font-size: 0.82rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No
-                                    image</span>
-                            </div>
-                            <input type="hidden" id="featured-image">
-                        </div>
-                        <div class="form-group">
-                            <label for="status">Status</label>
-                            <select id="status"
-                                style="width: 100%; padding: 1rem; background: var(--bg-dark); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white;">
-                                <option value="published">Published</option>
-                                <option value="draft">Draft</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="save-btn">Save Post</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Login Modal -->
-        <div id="login-modal" class="modal" style="display: none;">
-            <div class="modal-content" style="max-width: 400px;">
-                <h2 style="margin-bottom: 2rem; text-align: center;">pulsiveblog Manager</h2>
-                <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Please sign in with GitHub
-                    to manage your stories.</p>
-                <div style="text-align: center;">
-                    <a href="/api/auth/github" class="btn btn-primary"
-                        style="width: 100%; justify-content: center; background: #24292e; border: none; padding: 1rem;">
-                        <i class="fab fa-github"></i> Sign in with GitHub
+            <section class="landing-hero">
+                <span class="badge">Built for modern developers</span>
+                <h1>The Headless CMS <br> GitHub Users Love.</h1>
+                <p>Manage your blog content with as little friction as possible. <br> Permanently hosted on Cloudinary,
+                    secured by GitHub.</p>
+                <div style="margin-top: 3rem; display: flex; gap: 1.5rem; justify-content: center;">
+                    <a href="/api/auth/github" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1.1rem;">
+                        Start Writing Now
+                    </a>
+                    <a href="#features" class="btn btn-secondary" style="padding: 1rem 2.5rem; font-size: 1.1rem;">
+                        View Features
                     </a>
                 </div>
-            </div>
-        </div>
+            </section>
+
+            <section id="features" class="features-section">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fab fa-github"></i></div>
+                    <h3>Native GitHub Auth</h3>
+                    <p>No new passwords. Sign in with the tool you already use and love. Manage your team via GitHub
+                        identities.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-cloud"></i></div>
+                    <h3>Permanent Media</h3>
+                    <p>Integrated Cloudinary storage makes your image hosting bulletproof, fast, and optimized for any
+                        device.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-code"></i></div>
+                    <h3>Pure JSON API</h3>
+                    <p>Get your content exactly how you want it. Our clean REST API delivers JSON that's ready for any
+                        frontend.</p>
+                </div>
+            </section>
+
+            <section class="code-preview">
+                <div style="margin-bottom: 2rem; display: flex; gap: 0.5rem;">
+                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #ef4444;"></span>
+                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #fbbf24;"></span>
+                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #10b981;"></span>
+                </div>
+                <pre>
+<span class="code-comment">// Fetch your blog posts anywhere</span>
+<span class="code-keyword">const</span> res = <span class="code-keyword">await</span> fetch(<span class="code-string">'https://pulsiveblog.vercel.app/api/posts'</span>);
+<span class="code-keyword">const</span> data = <span class="code-keyword">await</span> res.json();
+
+<span class="code-comment">// Your content is ready to render</span>
+console.log(data.posts[<span class="code-string">0</span>].title); 
+<span class="code-comment">// Output: "Why GitHub is the best..."</span></pre>
+            </section>
+        </main>
 
         <footer>
-            <p>&copy; 2026 pulsiveblog. All rights reserved.</p>
+            <p>&copy; 2026 pulsiveblog. The Next Gen CMS for Devs.</p>
         </footer>
     </div>
 
-    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <script src="auth.js"></script>
-    <script src="app.js"></script>
+    <script>
+        // Check if logged in on landing page
+        document.addEventListener('DOMContentLoaded', () => {
+            if (Auth.isLoggedIn()) {
+                const user = Auth.getUser();
+                const loginCta = document.getElementById('login-cta');
+                const userProfile = document.getElementById('user-profile-landing');
+
+                if (user) {
+                    // Update CTA to show dashboard
+                    loginCta.innerHTML = '<i class="fas fa-columns"></i> Go to Dashboard';
+                    loginCta.href = '/dashboard.html';
+
+                    // Show small profile
+                    userProfile.style.display = 'flex';
+                    userProfile.querySelector('#user-avatar').src = user.avatar;
+                    userProfile.querySelector('#user-name').textContent = user.username;
+
+                    // Clicking profile also goes to dashboard
+                    userProfile.onclick = () => window.location.href = '/dashboard.html';
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>

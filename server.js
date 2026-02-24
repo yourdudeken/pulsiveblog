@@ -24,7 +24,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Session and Passport Middleware
 app.use(session({
-    secret: process.env.JWT_SECRET || 'pulse_session_secret',
+    secret: process.env.JWT_SECRET || 'pulsive_session_secret',
     resave: false,
     saveUninitialized: false
 }));

@@ -1,17 +1,17 @@
 const Auth = {
     getToken() {
-        return localStorage.getItem('pulse_token');
+        return localStorage.getItem('pulsive_token');
     },
     saveToken(token) {
-        localStorage.setItem('pulse_token', token);
+        localStorage.setItem('pulsive_token', token);
     },
     logout() {
-        localStorage.removeItem('pulse_token');
-        localStorage.removeItem('pulse_user');
+        localStorage.removeItem('pulsive_token');
+        localStorage.removeItem('pulsive_user');
         window.location.reload();
     },
     getUser() {
-        const user = localStorage.getItem('pulse_user');
+        const user = localStorage.getItem('pulsive_user');
         return user ? JSON.parse(user) : null;
     },
     isLoggedIn() {
@@ -36,26 +36,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!Auth.isLoggedIn()) {
-        loginModal.style.display = 'flex';
+        if (loginModal) loginModal.style.display = 'flex';
     } else {
         const user = Auth.getUser();
         if (user) {
             const profileBadge = document.getElementById('user-profile');
-            profileBadge.style.display = 'flex';
-            document.getElementById('user-avatar').src = user.avatar || 'https://github.com/identicons/pulse.png';
-            document.getElementById('user-name').textContent = user.username;
+            if (profileBadge) {
+                profileBadge.style.display = 'flex';
+                const avatarImg = document.getElementById('user-avatar');
+                const nameSpan = document.getElementById('user-name');
+                if (avatarImg) avatarImg.src = user.avatar || 'https://github.com/identicons/pulse.png';
+                if (nameSpan) nameSpan.textContent = user.username;
 
-            // Toggle Dropdown
-            const menu = document.getElementById('profile-menu');
-            profileBadge.addEventListener('click', (e) => {
-                e.stopPropagation();
-                menu.classList.toggle('active');
-            });
+                // Toggle Dropdown
+                const menu = document.getElementById('profile-menu');
+                if (menu) {
+                    profileBadge.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        menu.classList.toggle('active');
+                    });
 
-            // Close dropdown when clicking outside
-            document.addEventListener('click', () => {
-                menu.classList.remove('active');
-            });
+                    // Close dropdown when clicking outside
+                    document.addEventListener('click', () => {
+                        menu.classList.remove('active');
+                    });
+                }
+            }
         }
     }
 });
