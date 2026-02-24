@@ -81,13 +81,30 @@
 
         .code-preview {
             background: #020617;
-            padding: 2.5rem;
             border-radius: 24px;
-            margin-top: 6rem;
+            margin: 6rem auto 2rem;
             border: 1px solid rgba(255, 255, 255, 0.05);
             text-align: left;
             position: relative;
             overflow: hidden;
+            /* Prevent pseudo-elements from bleeding or scrolling */
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .code-scroll-container {
+            padding: 2.5rem;
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .code-scroll-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .code-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
         }
 
         .code-preview::before {
@@ -95,16 +112,19 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
+            right: 0;
             height: 4px;
             background: linear-gradient(90deg, var(--primary), var(--accent));
+            z-index: 10;
         }
 
         .code-preview pre {
             color: #94a3b8;
             font-family: 'Fira Code', 'Courier New', monospace;
-            font-size: 1.1rem;
-            line-height: 1.8;
+            font-size: 1rem;
+            line-height: 1.6;
+            white-space: pre;
+            /* Keep formatting */
         }
 
         .code-keyword {
@@ -221,19 +241,34 @@
             </section>
 
             <section class="code-preview">
-                <div style="margin-bottom: 2rem; display: flex; gap: 0.5rem;">
-                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #ef4444;"></span>
-                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #fbbf24;"></span>
-                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #10b981;"></span>
-                </div>
-                <pre>
-<span class="code-comment">// Fetch securely with your API key</span>
-<span class="code-keyword">const</span> res = <span class="code-keyword">await</span> fetch(<span class="code-string">'https://pulsiveblog.vercel.app/api/v1/posts?api_key=YOUR_KEY'</span>);
-<span class="code-keyword">const</span> data = <span class="code-keyword">await</span> res.json();
+                <div class="code-scroll-container">
+                    <div style="margin-bottom: 2rem; display: flex; gap: 0.5rem;">
+                        <span style="width: 12px; height: 12px; border-radius: 50%; background: #ef4444;"></span>
+                        <span style="width: 12px; height: 12px; border-radius: 50%; background: #fbbf24;"></span>
+                        <span style="width: 12px; height: 12px; border-radius: 50%; background: #10b981;"></span>
+                    </div>
+                    <pre>
+<span class="code-comment">// 1. Setup your secure request</span>
+<span class="code-keyword">const</span> API_KEY = <span class="code-string">'pb_your_private_key'</span>;
+<span class="code-keyword">const</span> URL = <span class="code-string">'https://pulsiveblog.vercel.app/api/v1/posts'</span>;
 
-<span class="code-comment">// Your content is ready to render</span>
-console.log(data.posts[<span class="code-string">0</span>].title); 
-<span class="code-comment">// Output: "Why GitHub is the best..."</span></pre>
+<span class="code-comment">// 2. Fetch with optimized headers</span>
+<span class="code-keyword">const</span> response = <span class="code-keyword">await</span> fetch(URL, {
+    method: <span class="code-string">'GET'</span>,
+    headers: {
+        <span class="code-string">'X-API-KEY'</span>: API_KEY,
+        <span class="code-string">'Content-Type'</span>: <span class="code-string">'application/json'</span>
+    }
+});
+
+<span class="code-comment">// 3. Handle data with confidence</span>
+<span class="code-keyword">if</span> (response.ok) {
+    <span class="code-keyword">const</span> { posts } = <span class="code-keyword">await</span> response.json();
+    console.log(<span class="code-string">`Found ${posts.length} stories`</span>);
+} <span class="code-keyword">else</span> {
+    console.error(<span class="code-string">'Access Denied or Server Error'</span>);
+}</pre>
+                </div>
             </section>
         </main>
 

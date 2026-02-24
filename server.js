@@ -49,8 +49,8 @@ app.use('/api/v1/upload', dbCheck, uploadRoutes);
 app.use('/api/v1/auth', dbCheck, authRoutes);
 
 // Legacy/Root redirects (optional but helpful for transition)
-app.get('/api/posts*', (req, res) => res.redirect(req.url.replace('/api/posts', '/api/v1/posts')));
-app.get('/api/auth*', (req, res) => res.redirect(req.url.replace('/api/auth', '/api/v1/auth')));
+app.get('/api/posts(.*)', (req, res) => res.redirect(req.url.replace('/api/posts', '/api/v1/posts')));
+app.get('/api/auth(.*)', (req, res) => res.redirect(req.url.replace('/api/auth', '/api/v1/auth')));
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
