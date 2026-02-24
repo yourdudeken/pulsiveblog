@@ -1,6 +1,7 @@
 const passport = require('passport');
 const GitHubStrategy = require('passport-github2').Strategy;
 const User = require('../models/User');
+const crypto = require('crypto');
 
 if (process.env.CLIENT_ID && process.env.CLIENT_SECRET) {
     passport.use(new GitHubStrategy({
@@ -18,8 +19,13 @@ if (process.env.CLIENT_ID && process.env.CLIENT_SECRET) {
                     user = new User({
                         username: profile.username || profile.displayName,
                         githubId: profile.id,
-                        avatar: profile._json.avatar_url
+                        avatar: profile._json.avatar_url,
+                        apiKey: `pb_${crypto.randomBytes(24).toString('hex')}`
                     });
+                    await user.save();
+                } else if (!user.apiKey) {
+                    // Back-fill API key for existing users if missing
+                    user.apiKey = `pb_${crypto.randomBytes(24).toString('hex')}`;
                     await user.save();
                 }
                 return done(null, user);

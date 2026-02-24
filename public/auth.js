@@ -19,10 +19,15 @@ const Auth = {
     },
     getHeaders() {
         const token = this.getToken();
-        return {
+        const user = this.getUser();
+        const headers = {
             'Content-Type': 'application/json',
             'Authorization': token ? `Bearer ${token}` : ''
         };
+        if (user && user.apiKey) {
+            headers['X-API-KEY'] = user.apiKey;
+        }
+        return headers;
     }
 };
 

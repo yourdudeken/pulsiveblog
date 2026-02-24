@@ -42,7 +42,8 @@ router.get('/github/callback',
                             localStorage.setItem('pulsive_token', '${token}');
                             localStorage.setItem('pulsive_user', JSON.stringify({
                                 username: '${user.username}',
-                                avatar: '${user.avatar || ""}'
+                                avatar: '${user.avatar || ""}',
+                                apiKey: '${user.apiKey}'
                             }));
                             window.location.href = '/dashboard.html';
                         </script>

@@ -4,6 +4,7 @@ const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
     githubId: { type: String, unique: true, sparse: true },
     avatar: { type: String },
+    apiKey: { type: String, unique: true, sparse: true },
     createdAt: { type: Date, default: Date.now }
 });
 

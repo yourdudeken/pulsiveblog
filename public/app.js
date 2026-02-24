@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalBtns = document.querySelectorAll('.close-modal, .close-modal-btn');
 
     let isEditing = false;
-    const API_URL = '/api/posts';
+    const API_URL = '/api/v1/posts';
 
     // Initialize Quill Editor
     const quill = new Quill('#editor-container', {
@@ -27,7 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch and display posts
     async function fetchPosts() {
         try {
-            const response = await fetch(API_URL);
+            const response = await fetch(API_URL, {
+                headers: Auth.getHeaders()
+            });
             const data = await response.json();
             // Data now contains { posts: [], totalPages, currentPage, totalPosts }
             displayPosts(data.posts);
@@ -168,7 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Edit Post (Fetch single post data)
     window.editPost = async (id) => {
         try {
-            const response = await fetch(`${API_URL}/${id}`);
+            const response = await fetch(`${API_URL}/${id}`, {
+                headers: Auth.getHeaders()
+            });
             const post = await response.json();
 
             isEditing = true;
@@ -191,9 +195,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Copy API URL
     window.copyApiUrl = (slug) => {
-        const fullUrl = `${window.location.origin}/api/posts/${slug}`;
+        const user = Auth.getUser();
+        const apiKeyParam = user && user.apiKey ? `?api_key=${user.apiKey}` : '';
+        const fullUrl = `${window.location.origin}/api/v1/posts/${slug}${apiKeyParam}`;
         navigator.clipboard.writeText(fullUrl).then(() => {
-            alert('API Endpoint copied to clipboard: ' + fullUrl);
+            alert('Secured API Endpoint copied to clipboard!');
         });
     };
 
@@ -211,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('image', file);
 
         try {
-            const response = await fetch('/api/upload', {
+            const response = await fetch('/api/v1/upload', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${Auth.getToken()}` },
                 body: formData

@@ -31,10 +31,14 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Routes
-app.use('/api/posts', postRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/api/auth', authRoutes);
+// Routes (Versioning v1)
+app.use('/api/v1/posts', postRoutes);
+app.use('/api/v1/upload', uploadRoutes);
+app.use('/api/v1/auth', authRoutes);
+
+// Legacy/Root redirects (optional but helpful for transition)
+app.get('/api/posts', (req, res) => res.redirect('/api/v1/posts'));
+app.get('/api/auth', (req, res) => res.redirect('/api/v1/auth'));
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
