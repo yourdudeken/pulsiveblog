@@ -7,7 +7,7 @@ if (process.env.CLIENT_ID && process.env.CLIENT_SECRET) {
     passport.use(new GitHubStrategy({
         clientID: process.env.CLIENT_ID,
         clientSecret: process.env.CLIENT_SECRET,
-        callbackURL: process.env.CALLBACK_URL || "http://localhost:8080/api/auth/github/callback"
+        callbackURL: process.env.CALLBACK_URL || "http://localhost:8080/api/v1/auth/github/callback"
     },
         async (accessToken, refreshToken, profile, done) => {
             try {
