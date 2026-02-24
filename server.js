@@ -1,4 +1,6 @@
-require('dotenv').config();
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+}
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -14,19 +16,28 @@ const authRoutes = require('./routes/authRoutes');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Connect to Database
-connectDB();
+// Trust Vercel Proxy
+app.set('trust proxy', 1);
 
-// Middleware
-app.use(cors());
-app.use(bodyParser.json());
+// 1. Static Files (Move to the very top for speed/resilience)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session and Passport Middleware
+// 2. Health check (Verify app is up without DB/Auth)
+app.get('/api/health', (req, res) => res.json({ status: 'ok', branding: 'pulsiveblog' }));
+
+// 3. Connect to Database (Async, don't block startup)
+connectDB();
+
+// 4. Global Middleware
+app.use(cors());
+app.use(bodyParser.json());
+
+// 5. Session and Passport Middleware
 app.use(session({
     secret: process.env.JWT_SECRET || 'pulsive_session_secret',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV === 'production' }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
