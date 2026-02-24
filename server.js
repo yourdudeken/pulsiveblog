@@ -38,8 +38,12 @@ app.use('/api/auth', authRoutes);
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ message: 'Something went wrong!' });
+    console.error('SERVER ERROR:', err.stack);
+    res.status(500).json({
+        message: 'Something went wrong!',
+        error: err.message,
+        stack: err.stack
+    });
 });
 
 app.listen(PORT, () => {
