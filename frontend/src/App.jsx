@@ -9,7 +9,7 @@ import Footer from './components/Footer';
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
-    <div className="w-16 h-16 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
+    <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
   </div>;
   return user ? children : <Navigate to="/" />;
 };
@@ -17,7 +17,7 @@ const ProtectedRoute = ({ children }) => {
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
-    <div className="w-16 h-16 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
+    <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
   </div>;
   return !user ? children : <Navigate to="/dashboard" />;
 };
