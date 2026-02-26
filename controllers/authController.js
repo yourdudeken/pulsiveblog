@@ -49,7 +49,7 @@ exports.githubCallback = async (req, res) => {
         const username = profile.login;
         const repoName = `${username}-blog`;
 
-        let user = await User.findOne({ github_id: githubId });
+        let user = await User.findOne({ $or: [{ github_id: githubId }, { username }] });
 
         if (!user) {
             try {
@@ -65,6 +65,7 @@ exports.githubCallback = async (req, res) => {
                 encrypted_access_token: encrypt(accessToken)
             });
         } else {
+            user.github_id = githubId;
             user.encrypted_access_token = encrypt(accessToken);
             await user.save();
         }
