@@ -28,7 +28,7 @@ function App() {
       <Router>
         <div className="flex flex-col min-h-screen relative w-full bg-[var(--background)]">
           <Navbar />
-          <main className="flex-1 w-full flex flex-col items-center">
+          <main className="flex-1 w-full flex flex-col items-center pt-20">
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />

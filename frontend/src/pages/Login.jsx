@@ -6,7 +6,7 @@ export default function Login() {
     const { loginWithGithub } = useAuth();
 
     return (
-        <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[var(--background)] p-4">
+        <div className="w-full h-full flex items-center justify-center relative overflow-hidden bg-[var(--background)] p-4 flex-1 my-auto">
             {/* Dynamic Background Elements */}
             <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--primary)] rounded-full mix-blend-screen filter blur-[120px] opacity-20 animate-blob" />
             <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-[var(--secondary)] rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob animation-delay-2000" />
