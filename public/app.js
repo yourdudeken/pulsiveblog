@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalBtns = document.querySelectorAll('.close-modal, .close-modal-btn');
     const settingsModal = document.getElementById('settings-modal');
     const openSettingsBtn = document.getElementById('open-settings-modal');
+    const viewPostModal = document.getElementById('view-post-modal');
 
     let isEditing = false;
     const API_URL = '/api/v1/posts';
@@ -128,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         postsContainer.innerHTML = posts.map(post => `
-            <div class="post-card" data-id="${post._id}">
+            <div class="post-card" data-id="${post._id}" onclick="if(!event.target.closest('.btn')) viewPost('${post._id}')" style="cursor: pointer;">
                 ${post.featuredImage ? `<div class="post-image" style="background-image: url('${post.featuredImage}')"></div>` : ''}
                 <div class="post-content-wrapper" style="padding: 2rem;">
                     <div class="post-meta">
@@ -175,17 +176,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     closeModalBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            postModal.style.display = 'none';
+            if (postModal) postModal.style.display = 'none';
+            if (viewPostModal) viewPostModal.style.display = 'none';
         });
     });
 
     window.addEventListener('click', (e) => {
-        if (e.target === postModal) {
-            postModal.style.display = 'none';
-        }
-        if (e.target === settingsModal) {
-            settingsModal.style.display = 'none';
-        }
+        if (e.target === postModal) postModal.style.display = 'none';
+        if (e.target === settingsModal) settingsModal.style.display = 'none';
+        if (e.target === viewPostModal) viewPostModal.style.display = 'none';
     });
 
     // Settings Handle
@@ -429,6 +428,38 @@ document.addEventListener('DOMContentLoaded', () => {
             postModal.style.display = 'flex';
         } catch (error) {
             console.error('Error fetching post details:', error);
+        }
+    };
+
+    // View Post
+    window.viewPost = async (id) => {
+        try {
+            const response = await fetch(`${API_URL}/${id}`, {
+                headers: Auth.getHeaders()
+            });
+            const post = await response.json();
+
+            document.getElementById('view-post-title').textContent = post.title;
+            document.getElementById('view-post-author').textContent = post.author;
+            document.getElementById('view-post-date').textContent = new Date(post.createdAt).toLocaleDateString();
+            document.getElementById('view-post-status').textContent = post.status.toUpperCase();
+            document.getElementById('view-post-status').style.color = post.status === 'published' ? 'var(--accent)' : 'var(--text-muted)';
+
+            const imageEl = document.getElementById('view-post-image');
+            if (post.featuredImage) {
+                imageEl.style.backgroundImage = `url('${post.featuredImage}')`;
+                imageEl.style.display = 'block';
+            } else {
+                imageEl.style.display = 'none';
+            }
+
+            document.getElementById('view-post-tags').innerHTML = (post.tags || []).map(tag => `<span class="tag">#${tag}</span>`).join('');
+
+            document.getElementById('view-post-content').innerHTML = window.marked ? marked.parse(post.content || '') : post.content;
+
+            if (viewPostModal) viewPostModal.style.display = 'flex';
+        } catch (error) {
+            console.error('Error fetching post details for view:', error);
         }
     };
 
