@@ -15,7 +15,7 @@ const apiLimiter = rateLimit({
     },
     // We can also key by API Key for more granular control if needed
     keyGenerator: (req) => req.header('X-API-KEY') || req.ip,
-    validate: { keyGeneratorIpFallback: false }, // Suppress IPv6 validation warning for custom key generator
+    validate: { default: false }, // Suppress all validation warnings
 });
 
 module.exports = apiLimiter;
