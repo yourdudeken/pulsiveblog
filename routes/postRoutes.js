@@ -1,23 +1,31 @@
 const express = require('express');
 const router = express.Router();
 const postController = require('../controllers/postController');
-const auth = require('../middleware/auth');
-const apiKeyAuth = require('../middleware/apiKeyAuth');
-const apiLimiter = require('../middleware/rateLimiter');
+const { protect } = require('../middleware/auth');
+const { apiLimiter } = require('../middleware/rateLimiter');
 
-// Public routes (now requiring API key for security as requested)
-router.get('/', apiLimiter, apiKeyAuth, postController.getAllPosts);
-router.get('/:identifier', apiLimiter, apiKeyAuth, postController.getPostByIdentifier);
+// Protect all post routes. Only authenticated users can manage their content.
+router.use(protect);
+router.use(apiLimiter);
 
-// Management routes (Support both JWT and API Key)
-const multiAuth = (req, res, next) => {
-    const authHeader = req.header('Authorization');
-    if (authHeader) return auth(req, res, next);
-    return apiKeyAuth(req, res, next);
-};
+// @route   GET /api/posts
+// @desc    List all posts inside the repository
+router.get('/', postController.listPosts);
 
-router.post('/', multiAuth, postController.createPost);
-router.put('/:id', multiAuth, postController.updatePost);
-router.delete('/:id', multiAuth, postController.deletePost);
+// @route   POST /api/posts
+// @desc    Create a new Markdown post
+router.post('/', postController.createPost);
+
+// @route   PUT /api/posts
+// @desc    Update an existing Markdown post
+router.put('/', postController.updatePost);
+
+// @route   DELETE /api/posts
+// @desc    Delete a post by path
+router.delete('/', postController.deletePost);
+
+// @route   POST /api/posts/media
+// @desc    Upload media directly to GitHub repo
+router.post('/media', postController.uploadMedia);
 
 module.exports = router;

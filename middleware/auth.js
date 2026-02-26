@@ -1,22 +1,31 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_pulsive_blog_key';
+const User = require('../models/User');
 
-const auth = (req, res, next) => {
-    const authHeader = req.header('Authorization');
-    if (!authHeader) return res.status(401).json({ message: 'No token, authorization denied' });
-
-    const token = authHeader.replace('Bearer ', '');
+exports.protect = async (req, res, next) => {
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        // Normalize ID to match Mongoose/API Key structure
-        req.user = {
-            ...decoded,
-            _id: decoded.id
-        };
+        let token;
+
+        if (req.cookies.jwt) {
+            token = req.cookies.jwt;
+        } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+            token = req.headers.authorization.split(' ')[1];
+        }
+
+        if (!token) {
+            return res.status(401).json({ error: 'Not authorized, no token' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            return res.status(401).json({ error: 'User no longer exists' });
+        }
+
+        req.user = user;
         next();
-    } catch (err) {
-        res.status(401).json({ message: 'Token is not valid' });
+    } catch (error) {
+        console.error('Authorization Error:', error.message);
+        res.status(401).json({ error: 'Not authorized, token failed' });
     }
 };
-
-module.exports = auth;

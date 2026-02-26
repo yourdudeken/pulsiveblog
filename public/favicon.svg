@@ -1,8 +1,0 @@
-<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="12" fill="#0f172a"/>
-  <!-- Centered Feather for Visibility -->
-  <g transform="translate(10, 8) scale(1.1)">
-    <path d="M5 35C5 35 10 32 13 27C16 22 17 15 15 9C13 3 7 1 7 1C7 1 6 7 7 13C8 19 10 25 15 29C20 33 27 35 27 35" stroke="#6366f1" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M7 33C17 27 30 12 30 2" stroke="#6366f1" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6"/>
-  </g>
-</svg>

@@ -1,152 +1,154 @@
-const Post = require('../models/Post');
-const User = require('../models/User');
-const mongoose = require('mongoose');
-const { triggerWebhook } = require('../middleware/webhookUtils');
+const GithubService = require('../services/githubService');
+const { decrypt } = require('../utils/crypto');
+const sanitizeHtml = require('sanitize-html');
 
-// Helper to generate slug from title (shared logic if needed)
-const slugify = (text) => {
-    if (!text) return '';
-    return text.toString().toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-]+/g, '')
-        .replace(/\-\-+/g, '-')
-        .replace(/^-+/, '')
-        .replace(/-+$/, '');
-};
-
-exports.getAllPosts = async (req, res) => {
-    try {
-        const { tag, page = 1, limit = 10, status = 'published', search } = req.query;
-
-        // Base query restricted to the authenticated user
-        const query = { user: req.user._id };
-
-        // Support 'all' to bypass status filtering
-        if (status !== 'all') {
-            query.status = status;
-        }
-
-        if (tag) {
-            query.tags = tag;
-        }
-
-        if (search) {
-            query.$or = [
-                { title: { $regex: search, $options: 'i' } },
-                { content: { $regex: search, $options: 'i' } }
-            ];
-        }
-
-        let totalPosts = await Post.countDocuments(query);
-        let queryBuilder = Post.find(query).sort({ createdAt: -1 });
-
-        // Support 'all' to bypass pagination limits
-        if (limit !== 'all') {
-            const limitNum = parseInt(limit);
-            const pageNum = parseInt(page);
-            queryBuilder = queryBuilder.limit(limitNum).skip((pageNum - 1) * limitNum);
-        }
-
-        const posts = await queryBuilder.exec();
-
-        res.json({
-            posts,
-            totalPages: limit === 'all' ? 1 : Math.ceil(totalPosts / parseInt(limit)),
-            currentPage: limit === 'all' ? 1 : Number(page),
-            totalPosts: totalPosts
-        });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-
-exports.getPostByIdentifier = async (req, res) => {
-    try {
-        const identifier = req.params.identifier;
-        let post;
-
-        if (mongoose.Types.ObjectId.isValid(identifier)) {
-            post = await Post.findOne({ _id: identifier, user: req.user._id });
-        } else {
-            post = await Post.findOne({ slug: identifier, user: req.user._id });
-        }
-
-        if (!post) return res.status(404).json({ message: 'Post not found' });
-        res.json(post);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+const getGithubService = (user) => {
+    const accessToken = decrypt(user.encrypted_access_token);
+    return new GithubService(accessToken);
 };
 
 exports.createPost = async (req, res) => {
-    const post = new Post({
-        user: req.user._id, // Set ownership
-        title: req.body.title,
-        slug: req.body.slug || slugify(req.body.title),
-        featuredImage: req.body.featuredImage,
-        content: req.body.content,
-        excerpt: req.body.excerpt,
-        author: req.body.author,
-        tags: req.body.tags || [],
-        status: req.body.status || 'published',
-        metaTitle: req.body.metaTitle,
-        metaDescription: req.body.metaDescription,
-        openGraphImage: req.body.openGraphImage
-    });
-
     try {
-        const newPost = await post.save();
-        res.status(201).json(newPost);
+        const { title, content, tags } = req.body;
 
-        // Trigger Webhook
-        const fullUser = await User.findById(req.user._id);
-        triggerWebhook(fullUser, { action: 'post_created', post: newPost });
-    } catch (err) {
-        res.status(400).json({ message: err.message });
+        if (!title || !content) {
+            return res.status(400).json({ error: 'Title and content are required' });
+        }
+
+        const date = new Date().toISOString().split('T')[0];
+        const githubSvc = getGithubService(req.user);
+        const slug = githubSvc.generateSlug(title);
+
+        const path = `posts/${date}-${slug}.md`;
+
+        const sanitizedContent = sanitizeHtml(content, {
+            allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'pre', 'code'])
+        });
+
+        const frontmatter = `---
+title: ${title}
+date: ${date}
+tags: ${Array.isArray(tags) ? tags.join(', ') : ''}
+---
+`;
+        const fullContent = frontmatter + '\n' + sanitizedContent;
+
+        await githubSvc.createFile(
+            req.user.repo_name,
+            path,
+            fullContent,
+            `feat: Add post ${title}`
+        );
+
+        res.status(201).json({ message: 'Post created successfully', path });
+    } catch (error) {
+        console.error('Create Post Error:', error);
+        res.status(500).json({ error: 'Failed to create post' });
     }
 };
 
 exports.updatePost = async (req, res) => {
     try {
-        const post = await Post.findOne({ _id: req.params.id, user: req.user._id });
-        if (!post) return res.status(404).json({ message: 'Post not found' });
+        const { path, title, content, tags } = req.body;
 
-        if (req.body.title) {
-            post.title = req.body.title;
-            if (!req.body.slug) post.slug = slugify(req.body.title);
+        if (!path || !title || !content) {
+            return res.status(400).json({ error: 'Path, title, and content are required' });
         }
-        if (req.body.slug) post.slug = req.body.slug;
-        if (req.body.featuredImage) post.featuredImage = req.body.featuredImage;
-        if (req.body.content) post.content = req.body.content;
-        if (req.body.excerpt) post.excerpt = req.body.excerpt;
-        if (req.body.author) post.author = req.body.author;
-        if (req.body.tags) post.tags = req.body.tags;
-        if (req.body.status) post.status = req.body.status;
-        if (req.body.metaTitle !== undefined) post.metaTitle = req.body.metaTitle;
-        if (req.body.metaDescription !== undefined) post.metaDescription = req.body.metaDescription;
-        if (req.body.openGraphImage !== undefined) post.openGraphImage = req.body.openGraphImage;
 
-        const updatedPost = await post.save();
-        res.json(updatedPost);
+        // e.g. posts/2026-12-01-my-title.md -> 2026-12-01
+        const dateMatch = path.match(/(\\d{4}-\\d{2}-\\d{2})/);
+        const date = dateMatch ? dateMatch[1] : new Date().toISOString().split('T')[0];
 
-        // Trigger Webhook
-        const fullUser = await User.findById(req.user._id);
-        triggerWebhook(fullUser, { action: 'post_updated', post: updatedPost });
-    } catch (err) {
-        res.status(400).json({ message: err.message });
+        const githubSvc = getGithubService(req.user);
+
+        const sanitizedContent = sanitizeHtml(content, {
+            allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'pre', 'code'])
+        });
+
+        const frontmatter = `---
+title: ${title}
+date: ${date}
+tags: ${Array.isArray(tags) ? tags.join(', ') : ''}
+---
+`;
+        const fullContent = frontmatter + '\n' + sanitizedContent;
+
+        await githubSvc.updateFile(
+            req.user.repo_name,
+            path,
+            fullContent,
+            `chore: Update post ${title}`
+        );
+
+        res.status(200).json({ message: 'Post updated successfully' });
+    } catch (error) {
+        console.error('Update Post Error:', error);
+        res.status(500).json({ error: 'Failed to update post' });
     }
 };
 
 exports.deletePost = async (req, res) => {
     try {
-        const post = await Post.findOneAndDelete({ _id: req.params.id, user: req.user._id });
-        if (!post) return res.status(404).json({ message: 'Post not found' });
-        res.json({ message: 'Post deleted' });
+        const { path } = req.body;
 
-        // Trigger Webhook
-        const fullUser = await User.findById(req.user._id);
-        triggerWebhook(fullUser, { action: 'post_deleted', post_id: req.params.id });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+        if (!path) {
+            return res.status(400).json({ error: 'File path to delete is required' });
+        }
+
+        const githubSvc = getGithubService(req.user);
+
+        await githubSvc.deleteFile(
+            req.user.repo_name,
+            path,
+            `chore: Delete post at ${path}`
+        );
+
+        res.status(200).json({ message: 'Post deleted successfully' });
+    } catch (error) {
+        console.error('Delete Post Error:', error);
+        res.status(500).json({ error: 'Failed to delete post' });
+    }
+};
+
+exports.uploadMedia = async (req, res) => {
+    try {
+        const { filename, base64Data } = req.body;
+
+        if (!filename || !base64Data) {
+            return res.status(400).json({ error: 'Filename and base64Data are required' });
+        }
+
+        const githubSvc = getGithubService(req.user);
+        const path = `media/${Date.now()}-${filename}`;
+
+        const base64Content = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
+        const bufferContent = Buffer.from(base64Content, 'base64');
+
+        await githubSvc.createFile(
+            req.user.repo_name,
+            path,
+            bufferContent,
+            `feat: Upload media ${filename}`,
+            true // isBuffer = true
+        );
+
+        const rawUrl = `https://raw.githubusercontent.com/${req.user.username}/${req.user.repo_name}/main/${path}`;
+
+        res.status(201).json({ message: 'Media uploaded successfully', url: rawUrl, path });
+    } catch (error) {
+        console.error('Upload Media Error:', error);
+        res.status(500).json({ error: 'Failed to upload media' });
+    }
+};
+
+exports.listPosts = async (req, res) => {
+    try {
+        const githubSvc = getGithubService(req.user);
+        const files = await githubSvc.listFiles(req.user.repo_name, 'posts');
+
+        res.status(200).json({ posts: files });
+    } catch (error) {
+        console.error('List Posts Error:', error);
+        res.status(500).json({ error: 'Failed to list posts' });
     }
 };
