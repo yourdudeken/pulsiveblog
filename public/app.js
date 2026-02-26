@@ -11,6 +11,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let isEditing = false;
     const API_URL = '/api/v1/posts';
 
+    // Filter state
+    let searchTimeout;
+    const dashboardSearch = document.getElementById('dashboard-search');
+    const dashboardStatus = document.getElementById('dashboard-status-filter');
+
+    if (dashboardSearch) {
+        dashboardSearch.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => fetchPosts(), 400);
+        });
+    }
+
+    if (dashboardStatus) {
+        dashboardStatus.addEventListener('change', () => fetchPosts());
+    }
+
     // Initialize Quill Editor
     const quill = new Quill('#editor-container', {
         theme: 'snow',
@@ -26,10 +42,69 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Initialize EasyMDE
+    const easyMDE = new EasyMDE({
+        element: document.getElementById('markdown-editor'),
+        spellChecker: false,
+        autosave: { enabled: false },
+        status: false,
+        placeholder: "Write your masterpiece in Markdown...",
+        minHeight: "300px"
+    });
+
+    // Editor Switching Logic
+    let activeEditor = 'rich'; // 'rich' or 'markdown'
+    const btnRich = document.getElementById('toggle-rich');
+    const btnMarkdown = document.getElementById('toggle-markdown');
+    const richWrapper = document.getElementById('rich-editor-wrapper');
+    const markdownWrapper = document.getElementById('markdown-editor-wrapper');
+
+    function switchEditor(mode) {
+        activeEditor = mode;
+        if (mode === 'rich') {
+            richWrapper.style.display = 'block';
+            markdownWrapper.style.display = 'none';
+            btnRich.style.background = 'var(--primary)';
+            btnRich.style.color = 'white';
+            btnMarkdown.style.background = 'transparent';
+            btnMarkdown.style.color = 'var(--text-muted)';
+
+            // Sync Markdown to Quill (simplistic text conversion)
+            if (easyMDE.value()) {
+                // For a true conversion we'd need a library like 'turndown' or 'marked'
+                // This is a basic fallback to preserve text
+                quill.root.innerText = easyMDE.value();
+            }
+        } else {
+            richWrapper.style.display = 'none';
+            markdownWrapper.style.display = 'block';
+            btnMarkdown.style.background = 'var(--primary)';
+            btnMarkdown.style.color = 'white';
+            btnRich.style.background = 'transparent';
+            btnRich.style.color = 'var(--text-muted)';
+
+            // Sync Quill to Markdown (simplistic text conversion)
+            if (quill.root.innerText) {
+                easyMDE.value(quill.root.innerText);
+            }
+            easyMDE.codemirror.refresh();
+        }
+    }
+
+    btnRich.addEventListener('click', () => switchEditor('rich'));
+    btnMarkdown.addEventListener('click', () => switchEditor('markdown'));
+
     // Fetch and display posts
     async function fetchPosts() {
         try {
-            const response = await fetch(API_URL, {
+            const search = dashboardSearch ? dashboardSearch.value : '';
+            const status = dashboardStatus ? dashboardStatus.value : 'published';
+
+            const url = new URL(API_URL, window.location.origin);
+            if (search) url.searchParams.append('search', search);
+            if (status) url.searchParams.append('status', status);
+
+            const response = await fetch(url, {
                 headers: Auth.getHeaders()
             });
             const data = await response.json();
@@ -87,6 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTitle.textContent = 'Create New Post';
         postForm.reset();
         quill.setContents([]);
+        easyMDE.value('');
+        switchEditor('rich');
         document.getElementById('post-id').value = '';
         document.getElementById('featured-image').value = '';
         document.getElementById('image-status').textContent = 'No image selected';
@@ -116,11 +193,44 @@ document.addEventListener('DOMContentLoaded', () => {
         const menu = document.getElementById('profile-menu');
         if (menu) menu.classList.remove('active');
 
-        const user = Auth.getUser();
-        if (user) {
-            document.getElementById('setting-api-key').value = user.apiKey || '';
-            document.getElementById('webhook-url').value = user.webhookUrl || '';
-            settingsModal.style.display = 'flex';
+        try {
+            // Fetch fresh user data to get logs
+            const response = await fetch('/api/v1/auth/me', {
+                headers: Auth.getHeaders()
+            });
+            const user = await response.json();
+
+            if (user) {
+                document.getElementById('setting-api-key').value = user.apiKey || '';
+                document.getElementById('webhook-url').value = user.webhookUrl || '';
+
+                // Render Logs
+                const logsContainer = document.getElementById('webhook-logs');
+                if (user.webhookLogs && user.webhookLogs.length > 0) {
+                    logsContainer.innerHTML = user.webhookLogs.map(log => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                            <div>
+                                <div style="font-size: 0.8rem; font-weight: 600; color: white;">${log.event.replace('_', ' ').toUpperCase()}</div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted);">${new Date(log.timestamp).toLocaleString()}</div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-family: monospace; font-size: 0.75rem; color: ${log.status >= 200 && log.status < 300 ? 'var(--accent)' : 'var(--danger)'}">
+                                    ${log.status}
+                                </span>
+                                <i class="fas ${log.status >= 200 && log.status < 300 ? 'fa-check-circle' : 'fa-exclamation-circle'}" 
+                                   style="color: ${log.status >= 200 && log.status < 300 ? 'var(--accent)' : 'var(--danger)'}; font-size: 0.8rem;"></i>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    logsContainer.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">No delivery logs yet. Try publishing a story!</div>`;
+                }
+
+                settingsModal.style.display = 'flex';
+            }
+        } catch (error) {
+            console.error('Error fetching settings:', error);
+            alert('Failed to load user settings');
         }
     });
 
@@ -231,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
             featuredImage: document.getElementById('featured-image').value,
             tags: tagsInput ? tagsInput.split(',').map(tag => tag.trim()) : [],
             excerpt: document.getElementById('excerpt').value,
-            content: quill.root.innerHTML,
+            content: activeEditor === 'rich' ? quill.root.innerHTML : easyMDE.value(),
             status: document.getElementById('status').value,
             metaTitle: document.getElementById('meta-title').value,
             metaDescription: document.getElementById('meta-description').value,
@@ -303,7 +413,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('excerpt').value = post.excerpt || '';
             document.getElementById('featured-image').value = post.featuredImage || '';
             document.getElementById('image-status').textContent = post.featuredImage ? 'Image uploaded' : 'No image selected';
+
+            // Set content in both editors
             quill.root.innerHTML = post.content || '';
+            easyMDE.value(post.content || '');
+
+            // Default to rich editor on edit
+            switchEditor('rich');
+
             document.getElementById('status').value = post.status || 'published';
             document.getElementById('meta-title').value = post.metaTitle || '';
             document.getElementById('meta-description').value = post.metaDescription || '';

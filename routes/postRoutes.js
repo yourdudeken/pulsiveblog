@@ -3,10 +3,11 @@ const router = express.Router();
 const postController = require('../controllers/postController');
 const auth = require('../middleware/auth');
 const apiKeyAuth = require('../middleware/apiKeyAuth');
+const apiLimiter = require('../middleware/rateLimiter');
 
 // Public routes (now requiring API key for security as requested)
-router.get('/', apiKeyAuth, postController.getAllPosts);
-router.get('/:identifier', apiKeyAuth, postController.getPostByIdentifier);
+router.get('/', apiLimiter, apiKeyAuth, postController.getAllPosts);
+router.get('/:identifier', apiLimiter, apiKeyAuth, postController.getPostByIdentifier);
 
 // Management routes (Support both JWT and API Key)
 const multiAuth = (req, res, next) => {

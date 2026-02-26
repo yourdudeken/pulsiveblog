@@ -16,30 +16,44 @@ const slugify = (text) => {
 
 exports.getAllPosts = async (req, res) => {
     try {
-        const { tag, page = 1, limit = 10, status = 'published' } = req.query;
-        // CRITICAL: Filter by the authenticated user's ID
-        const query = {
-            user: req.user._id,
-            status
-        };
+        const { tag, page = 1, limit = 10, status = 'published', search } = req.query;
+
+        // Base query restricted to the authenticated user
+        const query = { user: req.user._id };
+
+        // Support 'all' to bypass status filtering
+        if (status !== 'all') {
+            query.status = status;
+        }
 
         if (tag) {
             query.tags = tag;
         }
 
-        const posts = await Post.find(query)
-            .sort({ createdAt: -1 })
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .exec();
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { content: { $regex: search, $options: 'i' } }
+            ];
+        }
 
-        const count = await Post.countDocuments(query);
+        let totalPosts = await Post.countDocuments(query);
+        let queryBuilder = Post.find(query).sort({ createdAt: -1 });
+
+        // Support 'all' to bypass pagination limits
+        if (limit !== 'all') {
+            const limitNum = parseInt(limit);
+            const pageNum = parseInt(page);
+            queryBuilder = queryBuilder.limit(limitNum).skip((pageNum - 1) * limitNum);
+        }
+
+        const posts = await queryBuilder.exec();
 
         res.json({
             posts,
-            totalPages: Math.ceil(count / limit),
-            currentPage: Number(page),
-            totalPosts: count
+            totalPages: limit === 'all' ? 1 : Math.ceil(totalPosts / parseInt(limit)),
+            currentPage: limit === 'all' ? 1 : Number(page),
+            totalPosts: totalPosts
         });
     } catch (err) {
         res.status(500).json({ message: err.message });

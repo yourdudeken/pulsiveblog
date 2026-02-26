@@ -41,9 +41,9 @@ Include your API key in the request header:
 `GET /api/v1/posts`
 Query Parameters:
 - `tag`: Filter by specific tag
-- `status`: Default is 'published'
-- `page`: Pagination page
-- `limit`: Items per page
+- `status`: Default is 'published'. Use 'all' to retrieve both drafts and published posts.
+- `page`: Pagination page (default: 1)
+- `limit`: Items per page (default: 10). Use 'all' to fetch the entire collection without pagination.
 
 #### Get Single Post
 `GET /api/v1/posts/:identifier`
