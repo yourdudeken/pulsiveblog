@@ -49,7 +49,12 @@ exports.githubCallback = async (req, res) => {
         const username = profile.login;
         const repoName = `${username}-blog`;
 
-        let user = await User.findOne({ $or: [{ github_id: githubId }, { username }] });
+        let user = await User.findOne({
+            $or: [
+                { github_id: githubId },
+                { username: new RegExp('^' + username + '$', 'i') }
+            ]
+        });
 
         if (!user) {
             try {
