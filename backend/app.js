@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 
 const authRoutes = require('./routes/authRoutes');
 const postRoutes = require('./routes/postRoutes');
+const publicRoutes = require('./routes/publicRoutes');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(morgan('dev'));
 // Routing
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/public', publicRoutes);
 
 // General Error Handler
 app.use((err, req, res, next) => {

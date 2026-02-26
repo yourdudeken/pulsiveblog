@@ -20,6 +20,11 @@ export const listPosts = async () => {
     return data;
 };
 
+export const getPublicPosts = async () => {
+    const { data } = await api.get('/public/posts');
+    return data;
+};
+
 export const createPost = async (payload) => {
     const { data } = await api.post('/posts', payload);
     return data;
